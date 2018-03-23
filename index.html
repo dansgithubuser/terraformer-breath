@@ -1,0 +1,2641 @@
+<!DOCTYPE html>
+
+<head>
+	<script type="text/javascript">
+//======================================================================//
+window.onload=main;
+
+//var PREFIX="http://dl.dropbox.com/u/67501358/terraformerBreath/";
+var PREFIX="";
+
+/*=====constants=====*/
+var WORLD_SIZE=512;
+var TILE_SIZE=16;
+var CONTEXT_WIDTH=640;
+var CONTEXT_HEIGHT=480;
+var WALK_FORCE=12;
+var JUMP_SPEED=6;
+var WALK_CYCLE_LENGTH=16;
+var TILES_WIDE=40;
+var TILES_HIGH=30;
+var PLAYER_SIZE=16;
+var GIRTH=0.45;
+var MAX_HEALTH=72;
+var BREATH_SPEED=8;
+var BREATH_RADIUS=4;
+var BREATH_LONGEVITY=30;
+var ICON_RADIUS=4;
+var GRAB_RADIUS=12;
+var BREATH_ADULT_AGE=4;
+var SPIDER_RADIUS=8;
+var ROBOT_RADIUS=8;
+var MUSIC_SEGMENT_TIME=16*30+60;
+var MODIFIER_STRINGS=[
+	"NONE",
+	"N",
+	"E",
+	"S",
+	"W",
+	"NE",
+	"SE",
+	"SW",
+	"NW",
+	"N_E",
+	"N_S",
+	"N_W",
+	"E_S",
+	"E_W",
+	"S_W",
+	"N_SE",
+	"N_SW",
+	"E_SW",
+	"E_NW",
+	"S_NW",
+	"S_NE",
+	"W_NE",
+	"W_SE",
+	"NE_SE",
+	"NE_SW",
+	"NE_NW",
+	"SE_SW",
+	"SE_NW",
+	"SW_NW",
+	"N_E_S",
+	"E_S_W",
+	"S_W_N",
+	"W_N_E",
+	"N_E_SW",
+	"E_S_NW",
+	"S_W_NE",
+	"W_N_SE",
+	"N_SE_SW",
+	"E_SW_NW",
+	"S_NW_NE",
+	"W_NE_SE",
+	"NE_SE_SW",
+	"SE_SW_NW",
+	"SW_NW_NE",
+	"NW_NE_SE",
+	"N_E_S_W",
+	"NE_SE_SW_NW"
+];
+
+/*=====enumerations=====*/
+var EVENT_NONE=0;
+var EVENT_START=1;
+var EVENT_ARROWS=2;
+var EVENT_MOVED=3;
+var EVENT_GOOD=4;
+var EVENT_FIRST_JUMP_DEATH=5;
+var EVENT_JUMP_DEATH=6;
+var EVENT_FIRST_DEATH=7;
+var EVENT_FAST_JUMP=8;
+var EVENT_FAST_JUMP2=9;
+var EVENT_MOVED2=10;
+var EVENT_JUMPED=11;
+var EVENT_JUMPED2=12;
+var EVENT_FAST_EXPLORE=13;
+var EVENT_DROWNED=14;
+var EVENT_FIRST_DROWNING=15;
+var EVENT_NEAR_GOAL=16;
+var EVENT_POISONED=17;
+var EVENT_FIRST_POISONING=18;
+var EVENT_KILLED_BY_ROBOT=19;
+var EVENT_FIRST_TIME_KILLED_BY_ROBOT=20;
+var EVENT_KILLED_BY_SPIDERS=21;
+var EVENT_FIRST_TIME_KILLED_BY_SPIDERS=22;
+var EVENT_SPIDERS=23;
+var EVENT_SUFFOCATED=24;
+var EVENT_FIRST_SUFFOCATION=25;
+var EVENT_BURNED=26;
+var EVENT_FIRST_BURN=27;
+var EVENT_GOT_POWERUP=28;
+var EVENT_GOT_ATMOSPHERATOR=29;
+var EVENT_GOT_DUSTINATOR=30;
+var EVENT_GOT_FIERINATOR=31;
+var EVENT_GOT_SUCKINATOR=32;
+var EVENT_GOT_ELECTRONATOR=33;
+var EVENT_GOT_ATMOSPHERATOR2=34;
+var EVENT_GOT_DUSTINATOR2=35;
+var EVENT_GOT_FIERINATOR2=36;
+var EVENT_GOT_SUCKINATOR2=37;
+var EVENT_GOT_SUCKINATOR3=38;
+var EVENT_SUN_DEATH=39;
+
+var TERRAIN_SPACE=0;
+var TERRAIN_NORMAL=1;
+var TERRAIN_WATER=2;
+var TERRAIN_FROZEN=3;
+var TERRAIN_ICE=4;
+var TERRAIN_MELTED=5;
+var TERRAIN_SUN=6;
+var TERRAIN_SHORE=7;
+
+var PLANET_BLUE=0;
+var PLANET_RED=1;
+var PLANET_ROCK=2;
+var PLANET_ICE=3;
+var PLANET_GAS_ORANGE=4;
+var PLANET_GAS_BLUE=5;
+var PLANET_SUN=6;
+
+var ATMOSPHERE_NORMAL=0;
+var ATMOSPHERE_HOT=1;
+var ATMOSPHERE_STORM=2;
+var ATMOSPHERE_NONE=3;
+var ATMOSPHERE_COLD=4;
+
+var BREATH_NORMAL=0;
+var BREATH_ELECTRO=1;
+var BREATH_ATMOS=2;
+var BREATH_DUST=3;
+var BREATH_FIRE=4;
+var BREATH_SUCK=5;
+
+var NONE=0;
+var N=1;
+var E=2;
+var S=3;
+var W=4;
+var NE=5;
+var SE=6;
+var SW=7;
+var NW=8;
+var N_E=9;
+var N_S=10;
+var N_W=11;
+var E_S=12;
+var E_W=13;
+var S_W=14;
+var N_SE=15;
+var N_SW=16;
+var E_SW=17;
+var E_NW=18;
+var S_NW=19;
+var S_NE=20;
+var W_NE=21;
+var W_SE=22;
+var NE_SE=23;
+var NE_SW=24;
+var NE_NW=25;
+var SE_SW=26;
+var SE_NW=27;
+var SW_NW=28;
+var N_E_S=29;
+var E_S_W=30;
+var S_W_N=31;
+var W_N_E=32;
+var N_E_SW=33;
+var E_S_NW=34;
+var S_W_NE=35;
+var W_N_SE=36;
+var N_SE_SW=37;
+var E_SW_NW=38;
+var S_NW_NE=39;
+var W_NE_SE=40;
+var NE_SE_SW=41;
+var SE_SW_NW=42;
+var SW_NW_NE=43;
+var NW_NE_SE=44;
+var N_E_S_W=45;
+var NE_SE_SW_NW=46;
+var MODIFIERS=47;
+
+/*=====global variables=====*/
+var canvas;
+var context2D;
+var images;
+var sounds;
+var world;
+var player;
+var victory;
+var breath;
+var guide;
+var loadedRequiredResources=0;
+var totalRequiredResources=0;
+var loadedMusic=0;
+var totalMusic=0;
+
+/*=====helper functions=====*/
+function requiredResourceLoaded(x){
+	++loadedRequiredResources;
+	x.removeEventListener("load", x.stupid, false);
+}
+
+function makeRequired(x){
+	++totalRequiredResources;
+	x.stupid=function(){ requiredResourceLoaded(x) };
+	x.addEventListener("load", x.stupid, false);
+}
+
+function requiredAudioLoaded(x){
+	++loadedRequiredResources;
+	x.removeEventListener("canplaythrough", x.stupid, false);
+}
+
+function makeAudioRequired(x){
+	++totalRequiredResources;
+	x.stupid=function(){ requiredAudioLoaded(x) };
+	x.addEventListener("canplaythrough", x.stupid, false);
+}
+
+function musicLoaded(x){
+	++loadedMusic;
+	x.removeEventListener("canplaythrough", x.stupid, false);
+}
+
+function makeMusic(x){
+	++totalMusic;
+	x.stupid=function(){ musicLoaded(x); }
+	x.addEventListener("canplaythrough", x.stupid, false);
+}
+
+function getModifier(n, ne, e, se, s, sw, w, nw){
+	if(n){
+		if(e){
+			if(s){
+				if(w) return N_E_S_W;
+				else return N_E_S;
+			}
+			else{//no s
+				if(w) return W_N_E;
+				else{//no w
+					if(sw) return N_E_SW;
+					else return N_E;
+				}
+			}
+		}
+		else{//no e
+			if(s){
+				if(w) return S_W_N;
+				else return N_S;
+			}
+			else{//no s
+				if(w){
+					if(se) return W_N_SE;
+					return N_W;
+				}
+				else{//no w
+					if(se){
+						if(sw) return N_SE_SW;
+						else return N_SE;
+					}
+					else{//no se
+						if(sw) return N_SW;
+						else return N;
+					}
+				}
+			}
+		}
+	}
+	else{//no n
+		if(e){
+			if(s){
+				if(w) return E_S_W;
+				else{//no w
+					if(nw) return E_S_NW;
+					else return E_S;
+				}
+			}
+			else{//no s
+				if(w) return E_W;
+				else{//no w
+					if(sw){
+						if(nw) return E_SW_NW;
+						else return E_SW;
+					}
+					else{//no sw
+						if(nw) return E_NW;
+						else return E;
+					}
+				}
+			}
+		}
+		else{//no e
+			if(s){
+				if(w){
+					if(ne) return S_W_NE;
+					else return S_W;
+				}
+				else{//no w
+					if(ne){
+						if(nw) return S_NW_NE;
+						else return S_NE;
+					}
+					else{//no ne
+						if(nw) return S_NW;
+						else return S;
+					}
+				}
+			}
+			else{//no s
+				if(w){
+					if(ne){
+						if(se) return W_NE_SE;
+						else return W_NE;
+					}
+					else{//no ne
+						if(se) return W_SE;
+						else return W;
+					}
+				}
+				else{//no w
+					if(ne){
+						if(se){
+							if(sw){
+								if(nw) return NE_SE_SW_NW;
+								else return NE_SE_SW;
+							}
+							else{//no sw
+								if(nw) return NW_NE_SE;
+								else return NE_SE;
+							}
+						}
+						else{//no se
+							if(sw){
+								if(nw) return SW_NW_NE;
+								else return NE_SW;
+							}
+							else{//no sw
+								if(nw) return NE_NW;
+								else return NE;
+							}
+						}
+					}
+					else{//no ne
+						if(se){
+							if(sw){
+								if(nw) return SE_SW_NW;
+								else return SE_SW;
+							}
+							else{//no sw
+								if(nw) return SE_NW;
+								else return SE;
+							}
+						}
+						else{//no se
+							if(sw){
+								if(nw) return SW_NW;
+								else return SW;
+							}
+							else{//no sw
+								if(nw) return NW;
+								else return NONE;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return NONE;
+}
+
+/*=====classes=====*/
+function Guide(){
+	this.messages=[
+		//[message-duration pairs, repeats, next event]
+		//EVENT_NONE
+		0,
+		//EVENT_START
+		[[["Hello?", 60], ["Can you hear me?", 60], ["Parlons vous Spanish?", 60], ["Lbh gurer?", 60], ["Hey!", 60]],
+			3, EVENT_ARROWS],
+		//EVENT_ARROWS
+		[[["Move around a bit with the arrow keys if you can hear me.", 300]],
+			1, EVENT_NONE],
+		//EVENT_MOVED
+		0,
+		//EVENT_GOOD
+		[[["Awesome!", 60], ["Excellent.", 60], ["Splendid!", 60]],
+			1, EVENT_NONE],
+		//EVENT_FIRST_JUMP_DEATH
+		[[["I probably should've said this before, but you have to aim for a planet when jumping, or else you suffocate.", 150]],
+			1, EVENT_NONE],
+		//EVENT_JUMP_DEATH
+		[[["Pesky planets.", 60], ["Gee pal, you sure like dying. Just saying.", 60], ["Oh man, who jumps that way?", 60], ["This time....", 60]],
+			1, EVENT_NONE],
+		//EVENT_FIRST_DEATH
+		[[["OK, so you almost died. I can return you to the last safe planet you were on before that happens though.", 150]],
+			1, EVENT_NONE],
+		//EVENT_FAST_JUMP
+		[[["Oh hey it moved! Can it hear me?", 150]],
+			1, EVENT_FAST_JUMP2],
+		//EVENT_FAST_JUMP2
+		[[["If you can hear me, move to the edge of the planet, keep holding the arrow key, and jump with spacebar.", 300]],
+			1, EVENT_NONE],
+		//EVENT_MOVED2
+		[[["OK if you can still hear me, move to the edge of the planet, keep holding the arrow key, and jump with the spacebar.", 300]],
+			1, EVENT_NONE],
+		//EVENT_JUMPED
+		0,
+		//EVENT_JUMPED2
+		[[["Well that about covers it. Why don't you go exploring a bit?", 300]],
+			1, EVENT_NONE],
+		//EVENT_FAST_EXPLORE
+		[[["Huh, jumping already. I guess this one doesn't need me. I'll just... say things anyway. What I do.", 300]],
+			1, EVENT_NONE],
+		//EVENT_DROWNED
+		[[["It's not that you can't swim. There are sharks. Robot ones.", 120], ["I think I forgot to tell you, don't go in the water.", 90]],
+			1, EVENT_NONE],
+		//EVENT_FIRST_DROWNING
+		[[["Oh, uh, don't go in the water.", 300]],
+			1, EVENT_NONE],
+		//EVENT_NEAR_GOAL
+		[[["See that planet up there with the poisonous atompshere? That's where you ultimately need to go.", 300]],
+			1, EVENT_NONE],
+		//EVENT_POISONED
+		[[["Blue atmosphere is poisonous atmosphere.", 90], ["Poison bad. Hey, you seen any movies recently?", 90]],
+			1, EVENT_NONE],
+		//EVENT_FIRST_POISONING
+		[[["Yeah, you can't stick around on planets with poisonous atmospheres.", 300]],
+			1, EVENT_NONE],
+		//EVENT_KILLED_BY_ROBOT
+		[[["Robots are slow, maybe you can dodge it....", 90],
+				["Robots have claws made of metal, so you better stay away from them.", 120],
+				["I made a robot once, but it was way friendlier than that one.", 90],
+				["Oh great, now the robot is angry at you. Well I think these ones are always angry at everything, to be fair.", 90]],
+			1, EVENT_NONE],
+		//EVENT_FIRST_TIME_KILLED_BY_ROBOT
+		[[["Was that the first time you were ever killed by a robot? Congratulations!", 300]],
+			1, EVENT_NONE],
+		//EVENT_KILLED_BY_SPIDERS
+		[[["Please stop. No more spiders.", 90],
+				["Too many legs.", 90],
+				["...crawling all over you....", 90],
+				["I hate spiders!", 90]],
+			1, EVENT_NONE],
+		//EVENT_FIRST_TIME_KILLED_BY_SPIDERS
+		[[["Eugh! Spiders! I'd just run, but if you need to kill them press q. You are a dragon after all.", 300]],
+			1, EVENT_NONE],
+		//EVENT_SPIDERS
+		[[["Ah!", 30],
+				["No!", 30],
+				["Oh gee!", 30],
+				["Auuhh!", 30],
+				["Stay away!", 30],
+				["Run away!", 30],
+				["Hold me!", 30],
+				["Spiders!", 30],
+				["Spiders!", 30],
+				["Spiders!", 30],
+				["Kill them! Press q!", 30]],
+			1, EVENT_NONE],
+		//EVENT_SUFFOCATED
+		[[["Maybe you should give yourself a breather. Shwing!", 120],
+				["I think I said this, but you can't breathe on planets without atmospheres, like that one.", 150],
+				["Maybe if you go a little bit faster? If you can....", 120]],
+			1, EVENT_NONE],
+		//EVENT_FIRST_SUFFOCATION
+		[[["You can't breathe on planets without atmosphere, because they don't have atmospheres.", 300]],
+			1, EVENT_NONE],
+		//EVENT_BURNED
+		[[["You're way too hot for my tastes.", 120],
+				["Red atmospheres are too hot atmospheres.", 120],
+				["Pff, that planet got lucky.", 120],
+				["Oh, burn! Haha, no seriously, you're great.", 120]],
+			1, EVENT_NONE],
+		//EVENT_FIRST_BURN
+		[[["Planets with red atmospheres are too hot to stay on for very long.", 300]],
+			1, EVENT_NONE],
+		//EVENT_GOT_POWERUP
+		[[["You got a powerup! Now your breath is stronger and lasts longer.", 150]],
+			1, EVENT_NONE],
+		//EVENT_GOT_ATMOSPHERATOR
+		[[["You got the atmospherator! Press a to toggle it and q to use it!", 150]],
+			1, EVENT_GOT_ATMOSPHERATOR2],
+		//EVENT_GOT_DUSTINATOR
+		[[["You got the dustinator! Press d to toggle it and q to use it!", 150]],
+			1, EVENT_GOT_DUSTINATOR2],
+		//EVENT_GOT_FIERINATOR
+		[[["You got the fierinator! Press f to toggle it and q to use it!", 150]],
+			1, EVENT_GOT_FIERINATOR2],
+		//EVENT_GOT_SUCKINATOR
+		[[["You got the suckinator!", 90]],
+			1, EVENT_GOT_SUCKINATOR2],
+		//EVENT_GOT_ELECTRONATOR
+		[[["You got the electronator! Kill robots with your breath! Press q!", 300]],
+			1, EVENT_NONE],
+		//EVENT_GOT_ATMOSPHERATOR2
+		[[["You can use it to give planets atmosphere.", 150]],
+			1, EVENT_NONE],
+		//EVENT_GOT_DUSTINATOR2
+		[[["You can use it to cool planets down.", 150]],
+			1, EVENT_NONE],
+		//EVENT_GOT_FIERINATOR2
+		[[["You can use it to carbonate planets, thus heating them up.", 150]],
+			1, EVENT_NONE],
+		//EVENT_GOT_SUCKINATOR2
+		[[["It sucks but doesn't blow!", 60],
+				["Show your friends!", 60],
+				["It's great to show off at parties!", 60],
+				["It's much more useful than it sounds!", 60],
+				["It's illegal in Germany!", 60]],
+			2, EVENT_GOT_SUCKINATOR3],
+		//EVENT_GOT_SUCKINATOR3
+		[[["You can use it to get rid of a planet's atmosphere, in particular poisonous ones!", 150]],
+			1, EVENT_NONE],
+		//EVENT_SUN_DEATH
+		[[["You jumped into the sun. What do you expect?", 150],
+				["I know you want to be star, but jumping into the sun isn't the way.", 150],
+				["Sun is too hot to land on.", 150],
+				["You don't want to be on the sun.", 150]],
+			1, EVENT_NONE]
+	];
+	this.hasJumpDied=false;
+	this.hasDied=false;
+	this.hasMoved=false;
+	this.askedForMovement=false;
+	this.hasJumped=false;
+	this.askedForJump=false;
+	this.hasDrowned=false;
+	this.hasBeenNearGoal=false;
+	this.hasBeenPoisoned=false;
+	this.hasBeenKilledByRobot=false;
+	this.hasBeenKilledBySpiders=false;
+	this.spiderDelay=0;
+	this.hasBeenSuffocated=false;
+	this.hasBeenBurned=false;
+	this.eventHappened=function(event){
+		switch(event){
+			case EVENT_ARROWS:
+				this.askedForMovement=true;
+				this.nextEvent=EVENT_NONE;
+				this.lastEvent=event;
+				break;
+			case EVENT_MOVED:
+				if(this.hasMoved) return;
+				this.hasMoved=true;
+				if(!this.askedForMovement){
+					this.lastEvent=EVENT_FAST_JUMP;
+					this.nextEvent=EVENT_NONE;
+				}
+				else{
+					this.nextEvent=EVENT_MOVED2;
+					this.lastEvent=EVENT_GOOD;
+				}
+				break;
+			case EVENT_JUMP_DEATH:
+				if(!this.hasDied){
+					this.nextEvent=EVENT_FIRST_JUMP_DEATH;
+					this.lastEvent=EVENT_FIRST_DEATH;
+					this.hasDied=true;
+				}
+				else if(!this.hasJumpDied){
+					this.nextEvent=EVENT_NONE;
+					this.lastEvent=EVENT_FIRST_JUMP_DEATH;
+					this.hasJumpDied=true;
+				}
+				else{
+					this.nextEvent=EVENT_NONE;
+					this.lastEvent=event;
+				}
+				break;
+			case EVENT_FAST_JUMP2:
+				this.nextEvent=EVENT_NONE;
+				this.lastEvent=event;
+				this.askedForJump=true;
+				break;
+			case EVENT_MOVED2:
+				this.nextEvent=EVENT_NONE;
+				this.lastEvent=event;
+				this.askedForJump=true;
+				break;
+			case EVENT_JUMPED:
+				if(this.hasJumped) return;
+				this.hasJumped=true;
+				if(!this.askedForJump){
+					this.lastEvent=EVENT_FAST_EXPLORE;
+					this.nextEvent=EVENT_NONE;
+				}
+				else{
+					this.nextEvent=EVENT_JUMPED2;
+					this.lastEvent=EVENT_GOOD;
+				}
+				break;
+			case EVENT_DROWNED:
+				if(!this.hasDied){
+					this.nextEvent=EVENT_FIRST_DROWNING;
+					this.lastEvent=EVENT_FIRST_DEATH;
+					this.hasDied=true;
+					this.hasDrowned=true;
+				}
+				else if(!this.hasDrowned){
+					this.nextEvent=EVENT_NONE;
+					this.lastEvent=EVENT_FIRST_DROWNING;
+					this.hasDrowned=true;
+				}
+				else{
+					this.nextEvent=EVENT_NONE;
+					this.lastEvent=event;
+				}
+				break;
+			case EVENT_NEAR_GOAL:
+				if(!this.hasBeenNearGoal){
+					this.nextEvent=EVENT_NONE;
+					this.lastEvent=event;
+					this.hasBeenNearGoal=true;
+				}
+				else return;
+				break;
+			case EVENT_POISONED:
+				if(!this.hasDied){
+					this.nextEvent=EVENT_FIRST_POISONING;
+					this.lastEvent=EVENT_FIRST_DEATH;
+					this.hasDied=true;
+					this.hasBeenPoisoned=true;
+				}
+				else if(!this.hasBeenPoisoned){
+					this.nextEvent=EVENT_NONE;
+					this.lastEvent=EVENT_FIRST_POISONING;
+					this.hasBeenPoisoned=true;
+				}
+				else{
+					this.nextEvent=EVENT_NONE;
+					this.lastEvent=event;
+				}
+				break;
+			case EVENT_KILLED_BY_ROBOT:
+				if(!this.hasDied){
+					this.nextEvent=EVENT_FIRST_TIME_KILLED_BY_ROBOT;
+					this.lastEvent=EVENT_FIRST_DEATH;
+					this.hasDied=true;
+					this.hasBeenKilledByRobot=true;
+				}
+				else if(!this.hasBeenKilledByRobot){
+					this.nextEvent=EVENT_NONE;
+					this.lastEvent=EVENT_FIRST_TIME_KILLED_BY_ROBOT;
+					this.hasBeenKilledByRobot=true;
+				}
+				else{
+					this.nextEvent=EVENT_NONE;
+					this.lastEvent=event;
+				}
+				break;
+			case EVENT_KILLED_BY_SPIDERS:
+				if(!this.hasDied){
+					this.nextEvent=EVENT_FIRST_TIME_KILLED_BY_SPIDERS;
+					this.lastEvent=EVENT_FIRST_DEATH;
+					this.hasDied=true;
+					this.hasBeenKilledBySpiders=true;
+				}
+				else if(!this.hasBeenKilledBySpiders){
+					this.nextEvent=EVENT_NONE;
+					this.lastEvent=EVENT_FIRST_TIME_KILLED_BY_SPIDERS;
+					this.hasBeenKilledBySpiders=true;
+				}
+				else{
+					this.nextEvent=EVENT_NONE;
+					this.lastEvent=event;
+				}
+				break;
+			case EVENT_SPIDERS:
+				if(this.spiderDelay!=0) return;
+				this.nextEvent=EVENT_NONE;
+				this.lastEvent=event;
+				this.spiderDelay=30;
+				break;
+			case EVENT_SUFFOCATED:
+				if(!this.hasDied){
+					this.nextEvent=EVENT_FIRST_SUFFOCATION;
+					this.lastEvent=EVENT_FIRST_DEATH;
+					this.hasDied=true;
+					this.hasBeenSuffocated=true;
+				}
+				else if(!this.hasBeenSuffocated){
+					this.nextEvent=EVENT_NONE;
+					this.lastEvent=EVENT_FIRST_SUFFOCATION;
+					this.hasBeenSuffocated=true;
+				}
+				else{
+					this.nextEvent=EVENT_NONE;
+					this.lastEvent=event;
+				}
+				break;
+			case EVENT_BURNED:
+				if(!this.hasDied){
+					this.nextEvent=EVENT_FIRST_BURN;
+					this.lastEvent=EVENT_FIRST_DEATH;
+					this.hasDied=true;
+					this.hasBeenBurned=true;
+				}
+				else if(!this.hasBeenBurned){
+					this.nextEvent=EVENT_NONE;
+					this.lastEvent=EVENT_FIRST_BURN;
+					this.hasBeenBurned=true;
+				}
+				else{
+					this.nextEvent=EVENT_NONE;
+					this.lastEvent=event;
+				}
+				break;
+			case EVENT_SUN_DEATH:
+				if(!this.hasDied){
+					this.nextEvent=EVENT_SUN_DEATH;
+					this.lastEvent=EVENT_FIRST_DEATH;
+					this.hasDied=true;
+				}
+				else{
+					this.nextEvent=EVENT_NONE;
+					this.lastEvent=event;
+				}
+			default:
+				this.nextEvent=EVENT_NONE;
+				this.lastEvent=event;
+				break;
+		}
+		if(this.lastEvent!=EVENT_NONE){
+			var r=Math.floor(Math.random()*this.messages[this.lastEvent][0].length);
+			this.message=this.messages[this.lastEvent][0][r][0];
+			this.timeLeft=this.messages[this.lastEvent][0][r][1];
+			this.repeats=this.messages[this.lastEvent][1];
+			sounds.ding.pause();
+			sounds.ding.play();
+		}
+	}
+	this.render=function(){
+		if(this.timeLeft>0){
+			context2D.fillStyle="#00FFFF";
+			context2D.textAlign="left";
+			context2D.fillText(this.message, 50, CONTEXT_HEIGHT-3);
+		}
+	}
+	this.update=function(){
+		if(this.spiderDelay>0) --this.spiderDelay;
+		if(this.timeLeft>0){
+			--this.timeLeft;
+			if(this.timeLeft==0){
+				--this.repeats;
+				if(this.repeats==0){
+					if(this.nextEvent!=0) this.eventHappened(this.nextEvent);
+					else this.eventHappened(this.messages[this.lastEvent][2]);
+				}
+				else{
+					var r=Math.floor(Math.random()*this.messages[this.lastEvent][0].length);
+					this.message=this.messages[this.lastEvent][0][r][0];
+					this.timeLeft=this.messages[this.lastEvent][0][r][1];
+				}
+			}
+		}
+		return true;
+	}
+	world.objects.push(this);
+}
+
+function Item(x, y, type){
+	this.x=x;
+	this.y=y;
+	this.type=type;
+	this.image=images.icons[type][1];
+	this.update=function(){
+		if(Math.abs(this.x-player.x)+Math.abs(this.y-player.y)<GRAB_RADIUS){
+			if(type==0){
+				player.hasAtmospherator=true;
+				guide.eventHappened(EVENT_GOT_ATMOSPHERATOR);
+			}
+			else if(type==1){
+				player.hasSuckinator=true;
+				guide.eventHappened(EVENT_GOT_SUCKINATOR);
+			}
+			else if(type==2){
+				player.hasDustinator=true;
+				guide.eventHappened(EVENT_GOT_DUSTINATOR);
+			}
+			else if(type==3){
+				player.hasFierinator=true;
+				guide.eventHappened(EVENT_GOT_FIERINATOR);
+			}
+			else if(type==4){
+				player.hasElectronator=true;
+				if(player.breathType==BREATH_NORMAL) player.breathType=BREATH_ELECTRO;
+				guide.eventHappened(EVENT_GOT_ELECTRONATOR);
+			}
+			else if(type==5){
+				victory=true;
+			}
+			else if(type==6){
+				player.terraformLongevity+=70;
+				guide.eventHappened(EVENT_GOT_POWERUP);
+			}
+			sounds.item.pause();
+			sounds.item.play();
+			return false;
+		}
+		return true;
+	}
+	this.render=function(){
+		context2D.drawImage(
+			this.image,
+			this.x-Math.floor(player.x)-ICON_RADIUS+CONTEXT_WIDTH/2,
+			this.y-Math.floor(player.y)-ICON_RADIUS+CONTEXT_HEIGHT/2);
+	}
+}
+
+function Spider(x, y){
+	this.x=x;
+	this.y=y;
+	this.walkPhase=0;
+	this.vx=0;
+	this.vy=0;
+	this.moving=false;
+	this.update=function(){
+		if(this.moving){
+			if(Math.random()<0.1) this.moving=false;
+			++this.walkPhase;
+			if(this.walkPhase==12){
+				this.walkPhase=0;
+				if(Math.abs(this.x-player.x)<5*TILE_SIZE&&Math.abs(this.y-player.y)<5*TILE_SIZE){
+					sounds.spidernoise.pause();
+					sounds.spidernoise.play();
+				}
+			}
+		}
+		else if(Math.random()<0.02){
+			this.moving=true;
+			this.vx=(Math.random()-0.5)*12;
+			this.vy=(Math.random()-0.5)*12;
+		}
+		this.x+=this.vx;
+		this.y+=this.vy;
+		if(!world.tiles[Math.floor(this.x/TILE_SIZE)][Math.floor(this.y/TILE_SIZE)].passable()){
+			this.x-=this.vx;
+			this.y-=this.vy;
+			moving=false;
+		}
+		if(Math.abs(this.x-player.x)<5*TILE_SIZE&&Math.abs(this.y-player.y)<5*TILE_SIZE){
+			player.nearSpider=true;
+			if(Math.abs(this.x-player.x)+Math.abs(this.y-player.y)<SPIDER_RADIUS*2){
+				player.health-=12;
+				player.veryNearSpider=true;
+			}
+		}
+		if(breath.age<BREATH_LONGEVITY&&Math.abs(this.x-breath.x)+Math.abs(this.y-breath.y)<SPIDER_RADIUS*2){
+			sounds.spiderdead.pause();
+			sounds.spiderdead.play();
+			return false;
+		}
+		return true;
+	}
+	this.render=function(){
+		if(this.walkPhase>6)
+			context2D.drawImage(
+				images.spider[0],
+				Math.floor(this.x-player.x)-SPIDER_RADIUS+CONTEXT_WIDTH/2,
+				Math.floor(this.y-player.y)-SPIDER_RADIUS+CONTEXT_HEIGHT/2);
+		else
+			context2D.drawImage(
+				images.spider[1],
+				Math.floor(this.x-player.x)-SPIDER_RADIUS+CONTEXT_WIDTH/2,
+				Math.floor(this.y-player.y)-SPIDER_RADIUS+CONTEXT_HEIGHT/2);
+	}
+}
+
+function Robot(x, y){
+	this.x=x;
+	this.y=y;
+	this.vx=0;
+	this.vy=0;
+	this.update=function(){
+		if(Math.abs(this.x-player.x)<TILE_SIZE*7&&Math.abs(this.y-player.y)<TILE_SIZE*7){
+			if(player.x>this.x+2) this.vx=1;
+			else if(player.x<this.x-2) this.vx=-1;
+			if(player.y>this.y+2) this.vy=1;
+			else if(player.y<this.y-2) this.vy=-1;
+			player.nearRobot=true;
+			if(Math.random()<0.02){
+				sounds.robotnoise.pause();
+				sounds.robotnoise.play();
+			}
+		}
+		this.x+=this.vx;
+		this.y+=this.vy;
+		if(!world.tiles[Math.floor(this.x/TILE_SIZE)][Math.floor(this.y/TILE_SIZE)].passable()){
+			this.x-=this.vx;
+			this.y-=this.vy;
+		}
+		if(Math.abs(this.x-player.x)+Math.abs(this.y-player.y)<ROBOT_RADIUS){
+			player.health-=12;
+			player.veryNearRobot=true;
+		}
+		if(breath.age<BREATH_LONGEVITY&&breath.type==BREATH_ELECTRO&&
+			Math.abs(this.x-breath.x)+Math.abs(this.y-breath.y)<ROBOT_RADIUS
+		){
+			sounds.robotdead.pause();
+			sounds.robotdead.play();
+			return false;
+		}
+		return true;
+	}
+	this.render=function(){
+		context2D.drawImage(
+			images.robot,
+			this.x-Math.floor(player.x)-ROBOT_RADIUS+CONTEXT_WIDTH/2,
+			this.y-Math.floor(player.y)-ROBOT_RADIUS+CONTEXT_HEIGHT/2);
+	}
+}
+
+function Tile(){
+	this.image=images.space;
+	this.terrain=TERRAIN_SPACE;
+	this.atmosphere=ATMOSPHERE_NONE;
+	this.shoreShape=-1;
+	this.originalImage=images.space;
+	this.originalTerrain=TERRAIN_SPACE;
+	this.originalAtmosphere=ATMOSPHERE_NONE;
+	this.time=0;
+	this.set=function(image, terrain, atmosphere){
+		this.image=image;
+		this.terrain=terrain;
+		this.atmosphere=atmosphere;
+		this.originalImage=image;
+		this.originalTerrain=terrain;
+		this.originalAtmosphere=atmosphere;
+	}
+	this.terraform=function(image, terrain, atmosphere){
+		this.time=player.terraformLongevity;
+		this.image=image;
+		this.terrain=terrain;
+		this.atmosphere=atmosphere;
+		world.objects.push(this);
+	}
+	this.update=function(){
+		if(this.time<=0){
+			this.image=this.originalImage;
+			this.terrain=this.originalTerrain;
+			this.atmosphere=this.originalAtmosphere;
+			return false;
+		}
+		--this.time;
+		return true;
+	}
+	this.render=function(){}
+	this.passable=function(){
+		return this.terrain==TERRAIN_NORMAL||
+			this.terrain==TERRAIN_ICE||
+			this.terrain==TERRAIN_SHORE||
+			this.terrain==TERRAIN_MELTED||
+			this.terrain==TERRAIN_FROZEN;
+	}
+	this.safe=function(){
+		return this.atmosphere==ATMOSPHERE_NORMAL;
+	}
+	this.verySafe=function(){
+		return this.atmosphere==ATMOSPHERE_NORMAL&&this.time==0&&this.terrain!=TERRAIN_FROZEN;
+	}
+	this.frictiony=function(){
+		return this.terrain!=TERRAIN_FROZEN&&this.terrain!=TERRAIN_ICE;
+	}
+}
+
+function Breath(){
+	this.x=0;
+	this.y=0;
+	this.vx=0;
+	this.vy=0;
+	this.age=BREATH_LONGEVITY;
+	this.image=0;
+	this.type=0;
+	this.set=function(x, y, vx, vy, type){
+		sounds.breath.pause();
+		sounds.breath.play();
+		this.x=x+vx;
+		this.y=y+vy;
+		this.vx=vx;
+		this.vy=vy;
+		this.age=0;
+		this.type=type;
+		this.image=images.breath[type];
+		world.objects.push(this);
+	}
+	this.update=function(){
+		if(this.age>=BREATH_LONGEVITY) return false;
+		this.x+=this.vx;
+		this.y+=this.vy;
+		++this.age;
+		if(this.type!=BREATH_ELECTRO&&this.age>BREATH_ADULT_AGE&&this.type!=BREATH_NORMAL){//collide with atmospheres
+			if(breath.type==BREATH_ATMOS){
+				if(world.atmospherate(Math.floor(this.x/TILE_SIZE), Math.floor(this.y/TILE_SIZE)))
+					breath.age=BREATH_LONGEVITY;
+			}
+			else if(breath.type==BREATH_SUCK){
+				if(world.suckinate(Math.floor(this.x/TILE_SIZE), Math.floor(this.y/TILE_SIZE)))
+					breath.age=BREATH_LONGEVITY;
+			}
+			else if(breath.type==BREATH_DUST){
+				if(world.dustinate(Math.floor(this.x/TILE_SIZE), Math.floor(this.y/TILE_SIZE)))
+					breath.age=BREATH_LONGEVITY;
+			}
+			else if(breath.type==BREATH_FIRE){
+				if(world.fierinate(Math.floor(this.x/TILE_SIZE), Math.floor(this.y/TILE_SIZE)))
+					breath.age=BREATH_LONGEVITY;
+			}
+		}
+		return true;
+	}
+	this.render=function(){
+		context2D.drawImage(
+			this.image,
+			this.x-Math.floor(player.x)-BREATH_RADIUS+CONTEXT_WIDTH/2,
+			this.y-Math.floor(player.y)-BREATH_RADIUS+CONTEXT_HEIGHT/2
+		);
+	}
+}
+
+function Player(){
+	this.x=0;
+	this.y=0;
+	this.vx=0;
+	this.vy=0;
+	this.upPressed=false;
+	this.downPressed=false;
+	this.leftPressed=false;
+	this.rightPressed=false;
+	this.firePressed=false;
+	this.jumpPressed=false;
+	this.jumping=false;
+	this.jumpTime=0;
+	this.jumpedFromX=0;
+	this.jumpedFromY=0;
+	this.breathWait=0;
+	this.walkPhase=0;
+	this.walkDirection=S;
+	this.health=MAX_HEALTH;
+	this.breathType=BREATH_NORMAL;
+	this.hasAtmospherator=false;
+	this.hasDustinator=false;
+	this.hasSuckinator=false;
+	this.hasFierinator=false;
+	this.hasElectronator=false;
+	this.terraformLongevity=90;
+	this.veryNearRobot=false;
+	this.nearRobot=false;
+	this.veryNearSpider=false;
+	this.nearSpider=false;
+	this.setLocation=function(x, y){
+		this.x=x;
+		this.y=y;
+		this.jumpedFromX=x;
+		this.jumpedFromY=y;
+	}
+	this.resetBreath=function(){
+		if(this.hasElectronator) this.breathType=BREATH_ELECTRO;
+		else this.breathType=BREATH_NORMAL;
+	}
+	this.keyDown=function(event){
+		if(event.keyCode==38&&!this.upPressed){
+			this.upPressed=true;
+			guide.eventHappened(EVENT_MOVED);
+		}
+		else if(event.keyCode==40&&!this.downPressed){
+			this.downPressed=true;
+			guide.eventHappened(EVENT_MOVED);
+		}
+		else if(event.keyCode==37&&!this.leftPressed){
+			this.leftPressed=true;
+			guide.eventHappened(EVENT_MOVED);
+		}
+		else if(event.keyCode==39&&!this.rightPressed){
+			this.rightPressed=true;
+			guide.eventHappened(EVENT_MOVED);
+		}
+		else if(event.keyCode==81&&!this.firePressed){
+			this.firePressed=true;
+			if(this.breathWait==0){
+				var vx, vy;
+				if(this.walkDirection==N){
+					vx=0;
+					vy=-BREATH_SPEED;
+				}
+				else if(this.walkDirection==E){
+					vx=BREATH_SPEED;
+					vy=0;
+				}
+				else if(this.walkDirection==S){
+					vx=0;
+					vy=BREATH_SPEED;
+				}
+				else if(this.walkDirection==W){
+					vx=-BREATH_SPEED;
+					vy=0;
+				}
+				breath.set(this.x, this.y, vx, vy, this.breathType);
+				this.breathWait=BREATH_LONGEVITY;
+			}
+		}
+		else if(event.keyCode==32&&!this.jumpPressed){
+			this.jumpPressed=true;
+		}
+		else if(event.keyCode==65&&this.hasAtmospherator){
+			if(this.breathType==BREATH_ATMOS) this.resetBreath();
+			else this.breathType=BREATH_ATMOS;
+		}
+		else if(event.keyCode==83&&this.hasSuckinator){
+			if(this.breathType==BREATH_SUCK) this.resetBreath();
+			else this.breathType=BREATH_SUCK;
+		}
+		else if(event.keyCode==68&&this.hasDustinator){
+			if(this.breathType==BREATH_DUST) this.resetBreath();
+			else this.breathType=BREATH_DUST;
+		}
+		else if(event.keyCode==70&&this.hasFierinator){
+			if(this.breathType==BREATH_FIRE) this.resetBreath();
+			else this.breathType=BREATH_FIRE;
+		}
+	}
+	this.keyUp=function(event){
+		if(event.keyCode==38) this.upPressed=false;
+		else if(event.keyCode==40) this.downPressed=false;
+		else if(event.keyCode==37) this.leftPressed=false;
+		else if(event.keyCode==39) this.rightPressed=false;
+		else if(event.keyCode==81) this.firePressed=false;
+		else if(event.keyCode==32) this.jumpPressed=false;
+	}
+	this.reset=function(){
+		sounds.dead.pause();
+		sounds.dead.play();
+		this.jumping=false;
+		this.health=MAX_HEALTH;
+		this.jumpTime=0;
+		this.x=this.jumpedFromX;
+		this.y=this.jumpedFromY;
+		this.vx=0;
+		this.vy=0;
+	}
+	this.update=function(){//Player::update
+		if(this.x>259*TILE_SIZE&&this.x<263*TILE_SIZE&&this.y>141*TILE_SIZE&&this.y<145*TILE_SIZE){
+			guide.eventHappened(EVENT_NEAR_GOAL);
+		}
+		if(world.tiles[Math.floor(player.x/TILE_SIZE)][Math.floor(player.y/TILE_SIZE)].terrain==TERRAIN_WATER){
+			guide.eventHappened(EVENT_DROWNED);
+			this.reset();
+		}
+		if(world.tiles[Math.floor(player.x/TILE_SIZE)][Math.floor(player.y/TILE_SIZE)].terrain==TERRAIN_SUN){
+			guide.eventHappened(EVENT_SUN_DEATH);
+			this.reset();
+		}
+		if(this.nearSpider) guide.eventHappened(EVENT_SPIDERS);
+		if(this.breathWait>0) --this.breathWait;
+		if(!world.tiles[Math.floor(player.x/TILE_SIZE)][Math.floor(player.y/TILE_SIZE)].safe())
+			--this.health;
+		else if(this.health<MAX_HEALTH)
+			++this.health;
+		if(this.health<=0){
+			if(this.veryNearRobot)
+				guide.eventHappened(EVENT_KILLED_BY_ROBOT);
+			else if(this.veryNearSpider)
+				guide.eventHappened(EVENT_KILLED_BY_SPIDERS);
+			else if(world.tiles[Math.floor(player.x/TILE_SIZE)][Math.floor(player.y/TILE_SIZE)].atmosphere==ATMOSPHERE_NONE){
+				if(world.tiles[Math.floor(player.x/TILE_SIZE)][Math.floor(player.y/TILE_SIZE)].terrain!=TERRAIN_SPACE)
+					guide.eventHappened(EVENT_SUFFOCATED);
+				else
+					guide.eventHappened(EVENT_JUMP_DEATH);
+			}
+			else if(world.tiles[Math.floor(player.x/TILE_SIZE)][Math.floor(player.y/TILE_SIZE)].atmosphere==ATMOSPHERE_STORM)
+				guide.eventHappened(EVENT_POISONED);
+			else if(world.tiles[Math.floor(player.x/TILE_SIZE)][Math.floor(player.y/TILE_SIZE)].atmosphere==ATMOSPHERE_HOT)
+				guide.eventHappened(EVENT_BURNED);
+			this.reset();
+			return true;
+		}
+		if(this.jumping){
+			++this.jumpTime;
+			if(this.jumpTime>8&&
+				world.tiles[Math.floor(player.x/TILE_SIZE+GIRTH)][Math.floor(player.y/TILE_SIZE+GIRTH)].terrain!=TERRAIN_SPACE&&
+				world.tiles[Math.floor(player.x/TILE_SIZE-GIRTH)][Math.floor(player.y/TILE_SIZE+GIRTH)].terrain!=TERRAIN_SPACE&&
+				world.tiles[Math.floor(player.x/TILE_SIZE+GIRTH)][Math.floor(player.y/TILE_SIZE-GIRTH)].terrain!=TERRAIN_SPACE&&
+				world.tiles[Math.floor(player.x/TILE_SIZE-GIRTH)][Math.floor(player.y/TILE_SIZE-GIRTH)].terrain!=TERRAIN_SPACE
+			){
+				if(
+					world.tiles[Math.floor(player.x/TILE_SIZE+GIRTH)][Math.floor(player.y/TILE_SIZE+GIRTH)].terrain==TERRAIN_WATER||
+					world.tiles[Math.floor(player.x/TILE_SIZE-GIRTH)][Math.floor(player.y/TILE_SIZE+GIRTH)].terrain==TERRAIN_WATER||
+					world.tiles[Math.floor(player.x/TILE_SIZE+GIRTH)][Math.floor(player.y/TILE_SIZE-GIRTH)].terrain==TERRAIN_WATER||
+					world.tiles[Math.floor(player.x/TILE_SIZE-GIRTH)][Math.floor(player.y/TILE_SIZE-GIRTH)].terrain==TERRAIN_WATER
+				){
+					guide.eventHappened(EVENT_DROWNED);
+					this.reset();
+				}
+				else{
+					this.jumping=false;
+					this.jumpTime=0;
+					sounds.land.pause();
+					sounds.land.play();
+				}
+			}
+		}
+		this.y+=this.vy;
+		if(
+			!this.jumping&&(
+				!world.tiles[Math.floor(player.x/TILE_SIZE+GIRTH)][Math.floor(player.y/TILE_SIZE+GIRTH)].passable()||
+				!world.tiles[Math.floor(player.x/TILE_SIZE-GIRTH)][Math.floor(player.y/TILE_SIZE+GIRTH)].passable()||
+				!world.tiles[Math.floor(player.x/TILE_SIZE+GIRTH)][Math.floor(player.y/TILE_SIZE-GIRTH)].passable()||
+				!world.tiles[Math.floor(player.x/TILE_SIZE-GIRTH)][Math.floor(player.y/TILE_SIZE-GIRTH)].passable()
+		)){
+			this.y-=this.vy;
+			this.vy/=2;
+		}
+		var friction=!this.jumping&&world.tiles[Math.floor(player.x/TILE_SIZE)][Math.floor(player.y/TILE_SIZE)].frictiony();
+		if(friction) this.vy/=1.5;
+		this.x+=this.vx;
+		if(
+			!this.jumping&&(
+				!world.tiles[Math.floor(player.x/TILE_SIZE+GIRTH)][Math.floor(player.y/TILE_SIZE+GIRTH)].passable()||
+				!world.tiles[Math.floor(player.x/TILE_SIZE+GIRTH)][Math.floor(player.y/TILE_SIZE-GIRTH)].passable()||
+				!world.tiles[Math.floor(player.x/TILE_SIZE-GIRTH)][Math.floor(player.y/TILE_SIZE+GIRTH)].passable()||
+				!world.tiles[Math.floor(player.x/TILE_SIZE-GIRTH)][Math.floor(player.y/TILE_SIZE-GIRTH)].passable()
+		)){
+			this.x-=this.vx;
+			this.vx/=2;
+		}
+		if(friction) this.vx/=1.5;
+		if(!this.firePressed&&(friction||(Math.abs(this.vx)+Math.abs(this.vy)<0.1))){
+			if(this.upPressed) this.vy=0.9*this.vy-0.1*WALK_FORCE;
+			if(this.downPressed) this.vy=0.9*this.vy+0.1*WALK_FORCE;
+			if(this.leftPressed) this.vx=0.9*this.vx-0.1*WALK_FORCE;
+			if(this.rightPressed) this.vx=0.9*this.vx+0.1*WALK_FORCE;
+		}
+		if(this.jumpPressed&&!this.jumping){
+			if(this.upPressed&&!this.downPressed&&
+				world.tiles[Math.floor(player.x/TILE_SIZE)][Math.floor(player.y/TILE_SIZE-1)].terrain==TERRAIN_SPACE
+			){
+				this.vx=0;
+				this.vy=-JUMP_SPEED;
+				this.jumping=true;
+				guide.eventHappened(EVENT_JUMPED);
+				sounds.jump.pause();
+				sounds.jump.play();
+			}
+			if(this.downPressed&&!this.upPressed&&
+				world.tiles[Math.floor(player.x/TILE_SIZE)][Math.floor(player.y/TILE_SIZE+1)].terrain==TERRAIN_SPACE
+			){
+				this.vx=0;
+				this.vy=JUMP_SPEED;
+				this.jumping=true;
+				guide.eventHappened(EVENT_JUMPED);
+				sounds.jump.pause();
+				sounds.jump.play();
+			}
+			if(this.leftPressed&&!this.rightPressed&&
+				world.tiles[Math.floor(player.x/TILE_SIZE-1)][Math.floor(player.y/TILE_SIZE)].terrain==TERRAIN_SPACE
+			){
+				this.vx=-JUMP_SPEED;
+				this.vy=0;
+				this.jumping=true;
+				guide.eventHappened(EVENT_JUMPED);
+				sounds.jump.pause();
+				sounds.jump.play();
+			}
+			if(this.rightPressed&&!this.leftPressed&&
+				world.tiles[Math.floor(player.x/TILE_SIZE+1)][Math.floor(player.y/TILE_SIZE)].terrain==TERRAIN_SPACE
+			){
+				this.vx=JUMP_SPEED;
+				this.vy=0;
+				this.jumping=true;
+				guide.eventHappened(EVENT_JUMPED);
+				sounds.jump.pause();
+				sounds.jump.play();
+			}
+			if(this.jumping&&
+				world.tiles[Math.floor(player.x/TILE_SIZE+1)][Math.floor(player.y/TILE_SIZE)].verySafe()&&
+				!this.nearRobot
+			){
+				this.jumpedFromX=this.x;
+				this.jumpedFromY=this.y;
+			}
+		}
+		for(var i=0; i<world.objects.length; ++i)
+			if(Math.abs(this.x-world.objects[i].x)+Math.abs(this.y-world.objects[i].y)<16){
+			}
+		return true;
+	}
+	this.drawIcon=function(images, x, y, on){
+		if(on) context2D.drawImage(images[1], x, y);
+		else context2D.drawImage(images[0], x, y);
+	}
+	this.render=function(){
+		var frameIndex;
+		if(this.firePressed) frameIndex=2;
+		else{
+			if(this.leftPressed||this.rightPressed||this.upPressed||this.downPressed){
+				++this.walkPhase;
+				if(this.walkPhase==WALK_CYCLE_LENGTH||this.walkPhase*2==WALK_CYCLE_LENGTH){
+					if(this.walkPhase==WALK_CYCLE_LENGTH) this.walkPhase=0;
+					if(world.tiles[Math.floor(player.x/TILE_SIZE)][Math.floor(player.y/TILE_SIZE)].terrain==TERRAIN_NORMAL||
+						world.tiles[Math.floor(player.x/TILE_SIZE)][Math.floor(player.y/TILE_SIZE)].terrain==TERRAIN_MELTED||
+						world.tiles[Math.floor(player.x/TILE_SIZE)][Math.floor(player.y/TILE_SIZE)].terrain==TERRAIN_SHORE
+					){
+						sounds.step.pause();
+						sounds.step.play();
+					}
+				}
+				if(this.leftPressed) this.walkDirection=W;
+				else if(this.rightPressed) this.walkDirection=E;
+				else if(this.downPressed) this.walkDirection=S;
+				else if(this.upPressed) this.walkDirection=N;
+			}
+			if(this.walkPhase<(WALK_CYCLE_LENGTH/2)) frameIndex=0;
+			else frameIndex=1;
+		}
+		context2D.drawImage(
+			images.player[this.walkDirection][frameIndex],
+			(CONTEXT_WIDTH-PLAYER_SIZE)/2,
+			(CONTEXT_HEIGHT-PLAYER_SIZE)/2);
+		if(this.hasAtmospherator) this.drawIcon(images.icons[0], 2, CONTEXT_HEIGHT-10, this.breathType==BREATH_ATMOS);
+		if(this.hasSuckinator) this.drawIcon(images.icons[1], 12, CONTEXT_HEIGHT-10, this.breathType==BREATH_SUCK);
+		if(this.hasDustinator) this.drawIcon(images.icons[2], 22, CONTEXT_HEIGHT-10, this.breathType==BREATH_DUST);
+		if(this.hasFierinator) this.drawIcon(images.icons[3], 32, CONTEXT_HEIGHT-10, this.breathType==BREATH_FIRE);
+	}
+}
+
+function Music(){
+	this.time=MUSIC_SEGMENT_TIME-30*4;
+	this.phase=1;
+	this.update=function(){
+		if(loadedMusic<totalMusic) return true;
+		++this.time;
+		if(this.time>=MUSIC_SEGMENT_TIME){
+			this.time=0;
+			++this.phase;
+			if(this.phase>=2) this.phase=0;
+			var type=1;
+			if(Math.abs(player.x-256*TILE_SIZE)<64*TILE_SIZE&&Math.abs(player.y-256*TILE_SIZE)<64*TILE_SIZE) type=0;
+			else if(Math.abs(player.x-256*TILE_SIZE)>128*TILE_SIZE||Math.abs(player.y-256*TILE_SIZE)>128*TILE_SIZE) type=2;
+			var r=Math.floor(Math.random()*sounds.music[type][this.phase].length);
+			sounds.music[type][this.phase][r].pause();
+			sounds.music[type][this.phase][r].play();
+		}
+		return true;
+	}
+	this.render=function(){}
+	world.objects.push(this);
+}
+
+function Sounds(){
+	this.breath=document.createElement("audio");
+	this.breath.setAttribute("src", PREFIX+"sounds/breath.wav");
+	this.breath.load();
+	makeAudioRequired(this.breath);
+	this.dead=document.createElement("audio");
+	this.dead.setAttribute("src", PREFIX+"sounds/dead.wav");
+	this.dead.load();
+	makeAudioRequired(this.dead);
+	this.ding=document.createElement("audio");
+	this.ding.setAttribute("src", PREFIX+"sounds/ding.wav");
+	this.ding.load();
+	makeAudioRequired(this.ding);
+	this.item=document.createElement("audio");
+	this.item.setAttribute("src", PREFIX+"sounds/item.wav");
+	this.item.load();
+	makeAudioRequired(this.item);
+	this.jump=document.createElement("audio");
+	this.jump.setAttribute("src", PREFIX+"sounds/jump.wav");
+	this.jump.load();
+	makeAudioRequired(this.jump);
+	this.robotdead=document.createElement("audio");
+	this.robotdead.setAttribute("src", PREFIX+"sounds/robotdead.wav");
+	this.robotdead.load();
+	makeAudioRequired(this.robotdead);
+	this.robotnoise=document.createElement("audio");
+	this.robotnoise.setAttribute("src", PREFIX+"sounds/robotnoise.wav");
+	this.robotnoise.load();
+	makeAudioRequired(this.robotnoise);
+	this.spiderdead=document.createElement("audio");
+	this.spiderdead.setAttribute("src", PREFIX+"sounds/spiderdead.wav");
+	this.spiderdead.load();
+	makeAudioRequired(this.spiderdead);
+	this.spidernoise=document.createElement("audio");
+	this.spidernoise.setAttribute("src", PREFIX+"sounds/spidernoise.wav");
+	this.spidernoise.load();
+	makeAudioRequired(this.spidernoise);
+	this.step=document.createElement("audio");
+	this.step.setAttribute("src", PREFIX+"sounds/step.wav");
+	this.step.load();
+	makeAudioRequired(this.step);
+	this.land=document.createElement("audio");
+	this.land.setAttribute("src", PREFIX+"sounds/land.wav");
+	this.land.load();
+	makeAudioRequired(this.land);
+	this.music=[];
+	var musicNames=["close", "normal", "far"];
+	var musicVariations=[1, 2, 2];
+	for(var i=0; i<3; ++i){
+		this.music[i]=[];
+		this.music[i][0]=[];
+		for(var j=0; j<musicVariations[i]; ++j){
+			this.music[i][0][j]=document.createElement("audio");
+			this.music[i][0][j].setAttribute("src", PREFIX+"sounds/music/"+musicNames[i]+"1."+(j+1).toString()+".wav");
+			this.music[i][0][j].load();
+			makeMusic(this.music[i][0][j]);
+		}
+		this.music[i][1]=[];
+		for(var j=0; j<musicVariations[i]; ++j){
+			this.music[i][1][j]=document.createElement("audio");
+			this.music[i][1][j].setAttribute("src", PREFIX+"sounds/music/"+musicNames[i]+"2."+(j+1).toString()+".wav");
+			this.music[i][1][j].load();
+			makeMusic(this.music[i][1][j]);
+		}
+	}
+}
+
+function Images(){
+	this.icons=[];
+	var iconNames=["atmos", "suck", "dust", "fire"];
+	for(var i=0; i<4; ++i){
+		this.icons[i]=[];
+		this.icons[i][0]=new Image();
+		this.icons[i][0].src=PREFIX+"graphics/icon"+iconNames[i]+"off.bmp";
+		makeRequired(this.icons[i][0]);
+		this.icons[i][1]=new Image();
+		this.icons[i][1].src=PREFIX+"graphics/icon"+iconNames[i]+"on.bmp";
+		makeRequired(this.icons[i][1]);
+	}
+	this.icons[4]=[];
+	this.icons[4][1]=new Image();
+	this.icons[4][1].src=PREFIX+"graphics/iconelectro.bmp";
+	makeRequired(this.icons[4][1]);
+	this.icons[5]=[];
+	this.icons[5][1]=new Image();
+	this.icons[5][1].src=PREFIX+"graphics/iconend.bmp";
+	makeRequired(this.icons[5][1]);
+	this.icons[6]=[];
+	this.icons[6][1]=new Image();
+	this.icons[6][1].src=PREFIX+"graphics/iconpowerup.bmp";
+	makeRequired(this.icons[6][1]);
+	this.breath=[];
+	var breaths=["normal", "electro", "atmos", "dust", "fire", "suck"];
+	for(var i=0; i<6; ++i){
+		this.breath[i]=new Image();
+		this.breath[i].src=PREFIX+"graphics/breath"+breaths[i]+".png";
+		makeRequired(this.breath[i]);
+	}
+	this.atmosphere=[];
+	var atmColors=["white", "red", "blue"];
+	for(var i=ATMOSPHERE_NORMAL; i<=ATMOSPHERE_STORM; ++i){
+		this.atmosphere[i]=[];
+		for(var j=N; j<=NW; ++j){
+			this.atmosphere[i][j]=new Image();
+			this.atmosphere[i][j].src=PREFIX+"graphics/atm"+atmColors[i]+MODIFIER_STRINGS[j]+".bmp";
+			makeRequired(this.atmosphere[i][j]);
+		}
+	}
+	this.gasOrange=[];
+	for(var i=0; i<4; ++i){
+		this.gasOrange[i]=new Image();
+		this.gasOrange[i].src=PREFIX+"graphics/orangegas"+(i+1).toString()+".bmp";
+		makeRequired(this.gasOrange[i]);
+	}
+	this.gasBlue=[];
+	for(var i=0; i<4; ++i){
+		this.gasBlue[i]=new Image();
+		this.gasBlue[i].src=PREFIX+"graphics/bluegas"+(i+1).toString()+".bmp";
+		makeRequired(this.gasBlue[i]);
+	}
+	this.player=[];
+	for(var i=N; i<=W; ++i){
+		this.player[i]=[];
+		for(var j=0; j<3; ++j){
+			this.player[i][j]=new Image();
+			this.player[i][j].src=PREFIX+"graphics/dragon"+MODIFIER_STRINGS[i]+(j+1).toString()+".png";
+			makeRequired(this.player[i][j]);
+		}
+	}
+	this.spider=[];
+	for(var i=0; i<2; ++i){
+		this.spider[i]=new Image();
+		this.spider[i].src=PREFIX+"graphics/spider"+(i+1).toString()+".png";
+		makeRequired(this.spider[i]);
+	}
+	this.robot=new Image();
+	this.robot.src=PREFIX+"graphics/robot.png";
+	makeRequired(this.robot);
+	this.grass=[];
+	for(var i=0; i<4; ++i){
+		this.grass[i]=new Image();
+		this.grass[i].src=PREFIX+"graphics/grass"+(i+1).toString()+".bmp";
+		makeRequired(this.grass[i]);
+	}
+	this.red=[];
+	for(var i=0; i<4; ++i){
+		this.red[i]=new Image();
+		this.red[i].src=PREFIX+"graphics/red"+(i+1).toString()+".bmp";
+		makeRequired(this.red[i]);
+	}
+	this.rock=[];
+	for(var i=0; i<4; ++i){
+		this.rock[i]=new Image();
+		this.rock[i].src=PREFIX+"graphics/rock"+(i+1).toString()+".bmp";
+		makeRequired(this.rock[i]);
+	}
+	this.sun=[];
+	for(var i=0; i<4; ++i){
+		this.sun[i]=new Image();
+		this.sun[i].src=PREFIX+"graphics/sun"+(i+1).toString()+".bmp";
+		makeRequired(this.sun[i]);
+	}
+	this.water=[];
+	for(var i=0; i<4; ++i){
+		this.water[i]=new Image();
+		this.water[i].src=PREFIX+"graphics/water"+(i+1).toString()+".bmp";
+		makeRequired(this.water[i]);
+	}
+	this.snow=[];
+	for(var i=0; i<4; ++i){
+		this.snow[i]=new Image();
+		this.snow[i].src=PREFIX+"graphics/snow"+(i+1).toString()+".bmp";
+		makeRequired(this.snow[i]);
+	}
+	this.shore=[];
+	for(var i=N; i<MODIFIERS; ++i){
+		this.shore[i]=new Image();
+		this.shore[i].src=PREFIX+"graphics/shore"+MODIFIER_STRINGS[i]+".bmp";
+		makeRequired(this.shore[i]);
+	}
+	this.snowshore=[];
+	for(var i=N; i<MODIFIERS; ++i){
+		this.snowshore[i]=new Image();
+		this.snowshore[i].src=PREFIX+"graphics/snowshore"+MODIFIER_STRINGS[i]+".bmp";
+		makeRequired(this.snowshore[i]);
+	}
+	this.space=new Image();
+	this.space.src=PREFIX+"graphics/space.bmp";
+	makeRequired(this.space);
+}
+
+function World(){
+	/*-----terraforming helper functions-----*/
+	this.findLandSize=function(x, y){
+		var xi, yi, xf, yf;
+		xi=x;
+		while(this.tiles[xi-1][y].terrain!=TERRAIN_SPACE) --xi;
+		yi=y;
+		while(this.tiles[x][yi-1].terrain!=TERRAIN_SPACE) --yi;
+		xf=x;
+		while(this.tiles[xf+1][y].terrain!=TERRAIN_SPACE) ++xf;
+		yf=y;
+		while(this.tiles[x][yf+1].terrain!=TERRAIN_SPACE) ++yf;
+		return [xi, yi, xf, yf];
+	}
+	this.terraform=function(s, terrain, atmosphere){
+		for(var i=s[0]; i<=s[2]; ++i)
+			for(var j=s[1]; j<=s[3]; ++j){
+				var newImage, newTerrain, newAtmosphere;
+				if(terrain==-1){
+					newTerrain=this.tiles[i][j].terrain;
+					newImage=this.tiles[i][j].image;
+				}
+				else if(terrain==TERRAIN_FROZEN){
+					if(this.tiles[i][j].terrain==TERRAIN_WATER){
+						newTerrain=TERRAIN_FROZEN;
+						newImage=images.snow[Math.floor(Math.random()*images.snow.length)];
+					}
+					else if(this.tiles[i][j].terrain==TERRAIN_SHORE)
+						newImage=images.snowshore[this.tiles[i][j].shoreShape];
+					else{
+						newImage=this.tiles[i][j].image;
+						newTerrain=this.tiles[i][j].terrain;
+					}
+				}
+				else if(terrain==TERRAIN_MELTED){
+					if(this.tiles[i][j].terrain==TERRAIN_ICE){
+						newTerrain=TERRAIN_NORMAL;
+						newImage=images.rock[Math.floor(Math.random()*images.rock.length)];
+					}
+					else{
+						newTerrain=this.tiles[i][j].terrain;
+						newImage=this.tiles[i][j].image;
+					}
+				}
+				if(atmosphere==-1) newAtmosphere=this.tiles[i][j].atmosphere;
+				else if(atmosphere==ATMOSPHERE_COLD){
+					newAtmosphere=this.tiles[i][j].atmosphere;
+					if(newAtmosphere==ATMOSPHERE_HOT) newAtmosphere=ATMOSPHERE_NORMAL;
+				}
+				else newAtmosphere=atmosphere;
+				this.tiles[i][j].terraform(newImage, newTerrain, newAtmosphere);
+			}
+	}
+	this.aeroform=function(s, atmosphere){
+		--s[0];
+		--s[1];
+		++s[2];
+		++s[3];
+		if(atmosphere==ATMOSPHERE_NONE){
+			for(var i=s[0]; i<=s[2]; ++i) this.tiles[i][s[1]].terraform(images.space, TERRAIN_SPACE, ATMOSPHERE_NONE);
+			for(var i=s[0]; i<=s[2]; ++i) this.tiles[i][s[3]].terraform(images.space, TERRAIN_SPACE, ATMOSPHERE_NONE);
+			for(var i=s[1]+1; i<s[3]; ++i) this.tiles[s[0]][i].terraform(images.space, TERRAIN_SPACE, ATMOSPHERE_NONE);
+			for(var i=s[1]+1; i<s[3]; ++i) this.tiles[s[2]][i].terraform(images.space, TERRAIN_SPACE, ATMOSPHERE_NONE);
+		}
+		else if(atmosphere==ATMOSPHERE_COLD){
+			if(this.tiles[s[0]][s[1]].atmosphere==ATMOSPHERE_HOT){
+				this.tiles[s[0]][s[1]].terraform(images.atmosphere[ATMOSPHERE_NORMAL][NW], TERRAIN_SPACE, ATMOSPHERE_NORMAL);
+				this.tiles[s[2]][s[1]].terraform(images.atmosphere[ATMOSPHERE_NORMAL][NE], TERRAIN_SPACE, ATMOSPHERE_NORMAL);
+				this.tiles[s[0]][s[3]].terraform(images.atmosphere[ATMOSPHERE_NORMAL][SW], TERRAIN_SPACE, ATMOSPHERE_NORMAL);
+				this.tiles[s[2]][s[3]].terraform(images.atmosphere[ATMOSPHERE_NORMAL][SE], TERRAIN_SPACE, ATMOSPHERE_NORMAL);
+				for(var i=s[0]+1; i<s[2]; ++i) this.tiles[i][s[1]].terraform(images.atmosphere[ATMOSPHERE_NORMAL][N], TERRAIN_SPACE, ATMOSPHERE_NORMAL);
+				for(var i=s[0]+1; i<s[2]; ++i) this.tiles[i][s[3]].terraform(images.atmosphere[ATMOSPHERE_NORMAL][S], TERRAIN_SPACE, ATMOSPHERE_NORMAL);
+				for(var i=s[1]+1; i<s[3]; ++i) this.tiles[s[0]][i].terraform(images.atmosphere[ATMOSPHERE_NORMAL][W], TERRAIN_SPACE, ATMOSPHERE_NORMAL);
+				for(var i=s[1]+1; i<s[3]; ++i) this.tiles[s[2]][i].terraform(images.atmosphere[ATMOSPHERE_NORMAL][E], TERRAIN_SPACE, ATMOSPHERE_NORMAL);
+			}
+		}
+		else{
+			this.tiles[s[0]][s[1]].terraform(images.atmosphere[atmosphere][NW], TERRAIN_SPACE, atmosphere);
+			this.tiles[s[2]][s[1]].terraform(images.atmosphere[atmosphere][NE], TERRAIN_SPACE, atmosphere);
+			this.tiles[s[0]][s[3]].terraform(images.atmosphere[atmosphere][SW], TERRAIN_SPACE, atmosphere);
+			this.tiles[s[2]][s[3]].terraform(images.atmosphere[atmosphere][SE], TERRAIN_SPACE, atmosphere);
+			for(var i=s[0]+1; i<s[2]; ++i) this.tiles[i][s[1]].terraform(images.atmosphere[atmosphere][N], TERRAIN_SPACE, atmosphere);
+			for(var i=s[0]+1; i<s[2]; ++i) this.tiles[i][s[3]].terraform(images.atmosphere[atmosphere][S], TERRAIN_SPACE, atmosphere);
+			for(var i=s[1]+1; i<s[3]; ++i) this.tiles[s[0]][i].terraform(images.atmosphere[atmosphere][W], TERRAIN_SPACE, atmosphere);
+			for(var i=s[1]+1; i<s[3]; ++i) this.tiles[s[2]][i].terraform(images.atmosphere[atmosphere][E], TERRAIN_SPACE, atmosphere);
+		}
+	}
+	/*-----terraforming functions-----*/
+	this.atmospherate=function(x, y){
+		if(this.tiles[x][y].terrain!=TERRAIN_SPACE&&this.tiles[x][y].atmosphere==ATMOSPHERE_NONE){
+			var s=this.findLandSize(x, y);
+			this.terraform(s, -1, ATMOSPHERE_NORMAL);
+			this.aeroform(s, ATMOSPHERE_NORMAL);
+			return true;
+		}
+		return false;
+	}
+	this.suckinate=function(x, y){
+		if(this.tiles[x][y].terrain!=TERRAIN_SPACE&&this.tiles[x][y].atmosphere!=ATMOSPHERE_NONE){
+			var s=this.findLandSize(x, y);
+			this.terraform(s, -1, ATMOSPHERE_NONE);
+			this.aeroform(s, ATMOSPHERE_NONE);
+			return true;
+		}
+		return false;
+	}
+	this.dustinate=function(x, y){
+		if(this.tiles[x][y].terrain!=TERRAIN_SPACE&&this.tiles[x][y].atmosphere!=ATMOSPHERE_NONE){
+			var s=this.findLandSize(x, y);
+			this.terraform(s, TERRAIN_FROZEN, ATMOSPHERE_COLD);
+			this.aeroform(s, ATMOSPHERE_COLD);
+			return true;
+		}
+		return false;
+	}
+	this.fierinate=function(x, y){
+		if(this.tiles[x][y].terrain!=TERRAIN_SPACE&&this.tiles[x][y].atmosphere!=ATMOSPHERE_NONE){
+			var s=this.findLandSize(x, y);
+			this.terraform(s, TERRAIN_MELTED, -1);
+			return true;
+		}
+		return false;
+	}
+	/*-----initialization helper functions-----*/
+	this.makeAtmosphere=function(xi, yi, xf, yf, type){
+		this.tiles[xi][yi].set(images.atmosphere[type][NW], TERRAIN_SPACE, type);
+		this.tiles[xf][yi].set(images.atmosphere[type][NE], TERRAIN_SPACE, type);
+		this.tiles[xi][yf].set(images.atmosphere[type][SW], TERRAIN_SPACE, type);
+		this.tiles[xf][yf].set(images.atmosphere[type][SE], TERRAIN_SPACE, type);
+		for(var i=xi+1; i<xf; ++i) this.tiles[i][yi].set(images.atmosphere[type][N], TERRAIN_SPACE, type);
+		for(var i=xi+1; i<xf; ++i) this.tiles[i][yf].set(images.atmosphere[type][S], TERRAIN_SPACE, type);
+		for(var i=yi+1; i<yf; ++i) this.tiles[xi][i].set(images.atmosphere[type][W], TERRAIN_SPACE, type);
+		for(var i=yi+1; i<yf; ++i) this.tiles[xf][i].set(images.atmosphere[type][E], TERRAIN_SPACE, type);
+		for(var i=xi+1; i<xf; ++i)
+			for(var j=yi+1; j<yf; ++j)
+				this.tiles[i][j].set(this.tiles[i][j].image, this.tiles[i][j].terrain, type);
+	}
+	this.makeLand=function(xi, yi, xf, yf, terrain, images){
+		for(var i=xi; i<=xf; ++i)
+			for(var j=yi; j<=yf; ++j)
+				this.tiles[i][j].set(images[Math.floor(Math.random()*images.length)], terrain, ATMOSPHERE_NONE);
+	}
+	this.smooth=function(xi, yi, xf, yf){
+		for(var i=xi; i<=xf; ++i)
+			for(var j=yi; j<=yf; ++j)
+				if(this.tiles[i][j].terrain!=TERRAIN_WATER){
+					var n=this.tiles[i][j-1].terrain==TERRAIN_WATER;
+					var ne=this.tiles[i+1][j-1].terrain==TERRAIN_WATER;
+					var e=this.tiles[i+1][j].terrain==TERRAIN_WATER;
+					var se=this.tiles[i+1][j+1].terrain==TERRAIN_WATER;
+					var s=this.tiles[i][j+1].terrain==TERRAIN_WATER;
+					var sw=this.tiles[i-1][j+1].terrain==TERRAIN_WATER;
+					var w=this.tiles[i-1][j].terrain==TERRAIN_WATER;
+					var nw=this.tiles[i-1][j-1].terrain==TERRAIN_WATER;
+					var modifier=getModifier(n, ne, e, se, s, sw, w, nw);
+					if(modifier!=0){
+						this.tiles[i][j].shoreShape=modifier;
+						this.tiles[i][j].set(images.shore[modifier], TERRAIN_SHORE, ATMOSPHERE_NONE);
+					}
+				}
+	}
+	this.makePlanet=function(xi, yi, size, type, atmosphere, map){
+		var xf=xi+size-1;
+		var yf=yi+size-1;
+		if(type==PLANET_BLUE){
+			for(var i=xi; i<=xf; ++i)
+				for(var j=yi; j<=yf; ++j){
+					if(map[j-yi].charAt(i-xi)=='x')
+						this.tiles[i][j].set(images.grass[Math.floor(Math.random()*images.grass.length)], TERRAIN_NORMAL, ATMOSPHERE_NONE);
+					else
+						this.tiles[i][j].set(images.water[Math.floor(Math.random()*images.water.length)], TERRAIN_WATER, ATMOSPHERE_NONE);
+				}
+			this.smooth(xi, yi, xf, yf);
+		}
+		else if(type==PLANET_RED) this.makeLand(xi, yi, xf, yf, TERRAIN_NORMAL, images.red);
+		else if(type==PLANET_ROCK) this.makeLand(xi, yi, xf, yf, TERRAIN_NORMAL, images.rock);
+		else if(type==PLANET_ICE) this.makeLand(xi, yi, xf, yf, TERRAIN_ICE, images.snow);
+		else if(type==PLANET_GAS_ORANGE) this.makeLand(xi, yi, xf, yf, TERRAIN_SPACE, images.gasOrange);
+		else if(type==PLANET_GAS_BLUE) this.makeLand(xi, yi, xf, yf, TERRAIN_SPACE, images.gasBlue);
+		else if(type==PLANET_SUN) this.makeLand(xi, yi, xf, yf, TERRAIN_SUN, images.sun);
+		if(atmosphere!=ATMOSPHERE_NONE)
+			this.makeAtmosphere(xi-1, yi-1, xf+1, yf+1, atmosphere)
+	}
+	/*-----initialization-----*/
+	this.objects=[];
+	this.tiles=[];
+	for(var i=0; i<WORLD_SIZE; ++i){
+		this.tiles[i]=[]
+		for(var j=0; j<WORLD_SIZE; ++j)
+			this.tiles[i][j]=new Tile();
+	}
+	//starting area
+	this.makePlanet(256, 160, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxx ",
+			"xxxx ",
+			"xxxxx",
+			"xx xx",
+			" x xx"
+		]
+	);
+	this.makePlanet(258, 151, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"     ",
+			" xxx ",
+			" xxxx",
+			"xxxxx",
+			"xxxxx"
+		]
+	);
+	this.makePlanet(266, 149, 6, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"  xxxx",
+			" xxxxx",
+			"xxxxxx",
+			"xxxxxx",
+			"xxxxxx",
+			"xx  xx"
+		]
+	);
+	this.makePlanet(268, 141, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xx xx",
+			"xxx x",
+			"xxx x",
+			"xxxx ",
+			"  xxx",
+		]
+	);
+	this.makePlanet(287, 140, 3, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.objects.push(new Item(288*TILE_SIZE, 141*TILE_SIZE, 6));
+	this.makePlanet(259, 141, 4, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			" xxx",
+			"xxxx",
+			"xxx ",
+			"xxx ",
+		]
+	);
+	this.makePlanet(258, 127, 5, PLANET_ROCK, ATMOSPHERE_STORM, 0);//to end
+	this.makePlanet(247, 140, 8, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xx xxxxx",
+			"xxxxxxxx",
+			"x xxxxxx",
+			"xxxxx xx",
+			"xxxx  xx",
+			"xx x xxx",
+			"xxxxx xx",
+			"xxxxxxxx"
+		]
+	);
+	this.makePlanet(233, 135, 7, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxxxx",
+			"xxxxxxx",
+			"xx  xxx",
+			"xx   xx",
+			"xx x xx",
+			"xxxxxxx",
+			"xxxxxxx"
+		]
+	);
+	this.makePlanet(236, 145, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"     ",
+			"  xxx",
+			" xxxx",
+			"xxxxx",
+			"xxxxx"
+		]
+	);
+	this.makePlanet(230, 161, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx",
+			"xxxxx",
+			"xxxxx",
+			" xxxx",
+			"  xxx"
+		]
+	);
+	this.makePlanet(232, 170, 3, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(223, 136, 6, PLANET_BLUE, ATMOSPHERE_NORMAL,//to fierinator
+		[
+			"xx  xx",
+			"xx xxx",
+			"xx xxx",
+			"xx xxx",
+			"xx  xx",
+			"xxx xx"
+		]
+	);
+	this.objects.push(new Robot(228*TILE_SIZE, 139*TILE_SIZE));
+	this.makePlanet(210, 159, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"  xxx",
+			"xxxxx",
+			"xxxxx",
+			"xx xx",
+			"     "
+		]
+	);
+	this.objects.push(new Spider(212*TILE_SIZE, 161*TILE_SIZE));
+	this.objects.push(new Spider(212*TILE_SIZE, 161*TILE_SIZE));
+	this.objects.push(new Spider(212*TILE_SIZE, 161*TILE_SIZE));
+	this.makePlanet(190, 160, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx",
+			"xxxxx",
+			"xxxxx",
+			"xxxxx",
+			"xx xx"
+		]
+	);
+	this.makePlanet(189, 169, 3, PLANET_ROCK, ATMOSPHERE_NORMAL,
+		[
+			"xxx",
+			"xxx",
+			"xxx"
+		]
+	);
+	this.makePlanet(190, 178, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"   xx",
+			"xxxxx",
+			"xxxxx",
+			"xxxx ",
+			"xxxx "
+		]
+	);
+	this.makePlanet(170, 179, 6, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxxx",
+			"xxxxxx",
+			"xxxxxx",
+			"xxx xx",
+			"xxxxxx",
+			"  xxxx"
+		]
+	);
+	this.makePlanet(190, 195, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,//full green to hot planets
+		[
+			"xxxxx",
+			"xxxxx",
+			"xxxxx",
+			"xxxxx",
+			"xxxxx"
+		]
+	);
+	this.makePlanet(150, 181, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"  xxx",
+			" xxxx",
+			" xxxx",
+			" xxxx",
+			"  xxx"
+		]
+	);
+	this.objects.push(new Spider(152*TILE_SIZE, 183*TILE_SIZE));
+	this.objects.push(new Spider(152*TILE_SIZE, 183*TILE_SIZE));
+	this.objects.push(new Spider(152*TILE_SIZE, 183*TILE_SIZE));
+	this.makePlanet(150, 191, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxx ",
+			"xxxxx",
+			"  xxx",
+			"xxxxx",
+			"xxxxx"
+		]
+	);
+	this.makePlanet(152, 204, 4, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxx",
+			"xxxx",
+			"xxx ",
+			"xxx "
+		]
+	);
+	this.objects.push(new Robot(153*TILE_SIZE, 205*TILE_SIZE));
+	this.makePlanet(140, 193, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			" xx  ",
+			"xxxxx",
+			"xx xx",
+			"xx xx",
+			"xx   "
+		]
+	);
+	this.makePlanet(138, 210, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx",
+			" xxxx",
+			" xxxx",
+			"   xx",
+			"     "
+		]
+	);
+	this.makePlanet(160, 210, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xx xx",
+			"xx   ",
+			"xx   ",
+			"xxx x",
+			"xxxxx"
+		]
+	);
+	this.makePlanet(148, 220, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx",
+			"xxxxx",
+			"   xx",
+			"xx xx",
+			"xx xx "
+		]
+	);
+	this.makePlanet(151, 234, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,//to atmospherator
+		[
+			" xxxx",
+			"xxxxx",
+			"xxx  ",
+			"xxxxx",
+			" xxxx"
+		]
+	);
+	this.makePlanet(153, 249, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			" xxxx",
+			" xxxx",
+			" x   ",
+			"   xx",
+			"  xxx"
+		]
+	);
+	this.makePlanet(165, 248, 6, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xx xxx",
+			"xx xxx",
+			"xx  xx",
+			"xxx   ",
+			"xxxxxx",
+			" xxxxx"
+		]
+	);
+	this.makePlanet(166, 263, 4, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			" xxx",
+			"xxxx",
+			"xxxx",
+			"  xx"
+		]
+	);
+	this.makePlanet(165, 278, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xx xx",
+			"xx xx",
+			"   xx",
+			"x xxx",
+			"  xxx"
+		]
+	);
+	this.objects.push(new Spider(168*TILE_SIZE, 282*TILE_SIZE));
+	this.objects.push(new Spider(168*TILE_SIZE, 282*TILE_SIZE));
+	this.objects.push(new Spider(168*TILE_SIZE, 282*TILE_SIZE));
+	this.makePlanet(165, 295, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			" xxx ",
+			" xxxx",
+			"xxxx ",
+			"xxxx ",
+			" xxx "
+		]
+	);
+	this.makePlanet(141, 295, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			" xx  ",
+			" xxx ",
+			" xxxx",
+			" xxxx",
+			"  xxx"
+		]
+	);
+	this.objects.push(new Item(144*TILE_SIZE, 297*TILE_SIZE, 6));
+	this.makePlanet(167, 310, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx",
+			"xxxxx",
+			"   x ",
+			"   xx",
+			"   xx"
+		]
+	);
+	this.makePlanet(170, 326, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxx  ",
+			"xxxxx",
+			"xxxx ",
+			"xx xx",
+			"xx xx"
+		]
+	);
+	this.makePlanet(190, 329, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,//to suckinator
+		[
+			"xxxxx",
+			"xxxxx",
+			"xx   ",
+			"xx xx",
+			"   xx"
+		]
+	);
+	this.makePlanet(210, 328, 8, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xx      ",
+			"xx  x   ",
+			"xxxxxxxx",
+			"xxxxxxxx",
+			"xxx   xx",
+			"        ",
+			"x  x xxx",
+			"x xx xxx"
+		]
+	);
+	this.makePlanet(223, 331, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx",
+			"xxxxx",
+			"xx   ",
+			"xx x ",
+			"xx   "
+		]
+	);
+	this.makePlanet(240, 330, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx",
+			"xxxxx",
+			"xx xx",
+			"xx xx",
+			"   xx"
+		]
+	);
+	this.makePlanet(256, 332, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxx ",
+			"xxxxx",
+			"   xx",
+			"xx xx",
+			"xx   "
+		]
+	);
+	this.makePlanet(273, 334, 4, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xx  ",
+			"xx  ",
+			"xxxx",
+			"xxxx"
+		]
+	);
+	this.objects.push(new Spider(274*TILE_SIZE, 335*TILE_SIZE));
+	this.objects.push(new Spider(274*TILE_SIZE, 335*TILE_SIZE));
+	this.makePlanet(290, 335, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xx xx",
+			"xx xx",
+			"xxxxx",
+			"xxxxx",
+			"  xxx"
+		]
+	);
+	this.objects.push(new Robot(294*TILE_SIZE, 336*TILE_SIZE));
+	this.makePlanet(310, 335, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx",
+			"xxxxx",
+			"xx xx",
+			"xx x ",
+			"xx   "
+		]
+	);
+	this.makePlanet(330, 331, 6, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"  xxxx",
+			"    xx",
+			"xxx xx",
+			"xx  xx",
+			"xxxxxx",
+			"xxxxxx"
+		]
+	);
+	this.makePlanet(333, 319, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"   xx",
+			" xxxx",
+			" xxxx",
+			"xxxxx",
+			"xxxxx"
+		]
+	);
+	this.makePlanet(335, 305, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			" xx  ",
+			" xxx ",
+			" xxx ",
+			" xxx ",
+			"  x  "
+		]
+	);
+	this.makePlanet(335, 295, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			" xx  ",
+			" xxx ",
+			" xxx ",
+			" xxx ",
+			"  x  "
+		]
+	);
+	this.makePlanet(345, 295, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"    ",
+			"xxxx ",
+			"xxxx ",
+			" xxx ",
+			"     "
+		]
+	);
+	this.objects.push(new Item(347*TILE_SIZE, 297*TILE_SIZE, 6));//powerup
+	this.makePlanet(336, 277, 7, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx  ",
+			"xxxx   ",
+			"xxx    ",
+			"x   x  ",
+			"  xxx  ",
+			" xxxxxx",
+			"xxxxxxx"
+		]
+	);
+	this.makePlanet(346, 279, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx",
+			"xxxxx",
+			" xxx ",
+			"xxxx ",
+			"xxx  "
+		]
+	);
+	this.makePlanet(345, 265, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx",
+			"xxxx ",
+			"  xx ",
+			" xxxx",
+			" xxxx"
+		]
+	);
+	this.makePlanet(342, 250, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xx xx",
+			"xxxxx",
+			" xxxx",
+			"xxxxx",
+			"xxxxx"
+		]
+	);
+	this.makePlanet(341, 234, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,//to dustinator
+		[
+			"xxx  ",
+			"xxxx ",
+			"xx xx",
+			"xxxxx",
+			"xx xx"
+		]
+	);
+	this.makePlanet(338, 220, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx",
+			"xxxxx",
+			"  xxx",
+			"xxxxx",
+			"   xx"
+		]
+	);
+	this.makePlanet(337, 204, 6, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxx xx",
+			"xxxxxx",
+			" xxxxx",
+			"xxxxx ",
+			"xxxxxx",
+			" xxxxx"
+		]
+	);
+	this.makePlanet(336, 190, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx",
+			"xxxxx",
+			"   xx",
+			"xx xx",
+			"xxxxx"
+		]
+	);
+	this.makePlanet(315, 188, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxx ",
+			"xxx  ",
+			"xxxxx",
+			"x xxx",
+			"xxxxx"
+		]
+	);
+	this.makePlanet(296, 185, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx",
+			"xxx x",
+			"xxxxx",
+			"xxxxx",
+			"  xxx"
+		]
+	);
+	this.makePlanet(275, 182, 9, PLANET_BLUE, ATMOSPHERE_NORMAL,//9x9 blue to hot planets
+		[
+			"xxx  xxxx",
+			"xxxx  xxx",
+			"xxxx    x",
+			"xxxxxxx  ",
+			"xxxx     ",
+			"xxxxx    ",
+			" xxxxx xx",
+			"    xxxxx",
+			"   xxxxxx"
+		]
+	);
+	this.makePlanet(274, 170, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx",
+			"xxx x",
+			" xxxx",
+			"xxxxx",
+			" xxxx"
+		]
+	);
+	this.makePlanet(284, 171, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"  xxx",
+			" xxxx",
+			"xxxxx",
+			"xx  x",
+			"xxx  "
+		]
+	);
+	this.makePlanet(283, 163, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxx x",
+			"xx   ",
+			"xxxxx",
+			"xxxxx",
+			"xxxxx"
+		]
+	);
+	//atmospherator
+	this.makePlanet(139, 233, 9, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx    ",
+			"xxxxxx   ",
+			"xxxxxxxxx",
+			" xxxxxxxx",
+			" xxxxxxxx",
+			"xxxxx  xx",
+			"xxx      ",
+			"xxx xxxxx",
+			"xx  xxxxx"
+		]
+	);
+	this.objects.push(new Item(TILE_SIZE*146, TILE_SIZE*241, 0));
+	this.makePlanet(127, 231, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xx xx",
+			"x  xx",
+			"  xxx",
+			"  xxx",
+			"     "
+		]
+	);
+	this.makePlanet(126, 239, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"     ",
+			"  xxx",
+			"x  xx",
+			"xx xx",
+			"xx xx"
+		]
+	);
+	this.makePlanet(142, 246, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx",
+			" xxxx",
+			"   xx",
+			"xx xx",
+			"xx xx"
+		]
+	);
+	this.makePlanet(128, 223, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xx   ",
+			"xxx  ",
+			"xxxx ",
+			"xxxx ",
+			" xxx "
+		]
+	);
+	this.makePlanet(129, 248, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx",
+			"xxxxx",
+			"     ",
+			"xx xx",
+			"xxxxx"
+		]
+	);
+	this.makePlanet(120, 222, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"   xx",
+			"  xxx",
+			" xxxx",
+			"xxxxx",
+			" xxxx"
+		]
+	);
+	this.makePlanet(118, 232, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx",
+			"xxxxx",
+			"xxxxx",
+			" xxxx",
+			"   xx"
+		]
+	);
+	this.makePlanet(119, 250, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx",
+			"xxxxx",
+			"xx xx",
+			"   xx",
+			"     "
+		]
+	);
+	this.makePlanet(132, 258, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx",
+			"xxxxx",
+			"  xx ",
+			"x    ",
+			"xx xx"
+		]
+	);
+	this.makePlanet(144, 257, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xxxxx",
+			"xxxxx",
+			"xx x ",
+			"x    ",
+			"x xxx"
+		]
+	);
+	this.makePlanet(159, 239, 4, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(160, 223, 4, PLANET_ROCK, ATMOSPHERE_NONE, 0);//near atmospherator to hot planets
+	//dustinator
+	this.makePlanet(360, 235, 5, PLANET_BLUE, ATMOSPHERE_NORMAL,
+		[
+			"xx xx",
+			"xxxxx",
+			"xxxxx",
+			"xx xx",
+			"x    "
+		]
+	);
+	this.makePlanet(370, 236, 3, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(384, 237, 5, PLANET_RED, ATMOSPHERE_NORMAL, 0);
+	this.makePlanet(394, 234, 4, PLANET_RED, ATMOSPHERE_NORMAL, 0);
+	this.makePlanet(396, 225, 3, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(405, 226, 3, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(407, 216, 5, PLANET_RED, ATMOSPHERE_NORMAL, 0);
+	this.makePlanet(411, 200, 4, PLANET_RED, ATMOSPHERE_NORMAL, 0);
+	this.objects.push(new Item(TILE_SIZE*413, TILE_SIZE*202, 2));
+	this.makePlanet(385, 247, 2, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(390, 248, 3, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(391, 257, 4, PLANET_RED, ATMOSPHERE_NORMAL, 0);//to gas giant 1
+	//gas giant 1
+	this.makePlanet(389, 272, 3, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(411, 273, 5, PLANET_ICE, ATMOSPHERE_NORMAL, 0);
+	this.makePlanet(425, 276, 4, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(441, 270, 20, PLANET_GAS_ORANGE, ATMOSPHERE_NONE, 0);
+	this.makePlanet(427, 267, 6, PLANET_ICE, ATMOSPHERE_NONE, 0);
+	this.makePlanet(450, 297, 4, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(452, 307, 3, PLANET_ROCK, ATMOSPHERE_STORM, 0);
+	this.makePlanet(426, 293, 3, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(433, 295, 3, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(453, 315, 2, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(440, 314, 6, PLANET_ICE, ATMOSPHERE_NORMAL, 0);
+	this.objects.push(new Item(441*TILE_SIZE, 315*TILE_SIZE, 6));
+	this.makePlanet(429, 256, 4, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(449, 256, 3, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(448, 236, 4, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.objects.push(new Item(449*TILE_SIZE, 237*TILE_SIZE, 6));
+	//sun
+	this.makePlanet(224, 224, 64, PLANET_SUN, ATMOSPHERE_NONE);
+	//hot planets
+	this.makePlanet(265, 184, 5, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(263, 199, 6, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(240, 203, 8, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(220, 208, 5, PLANET_RED, ATMOSPHERE_HOT, 0);
+	this.makePlanet(210, 208, 4, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(210, 197, 4, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(197, 210, 5, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(196, 223, 5, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(180, 222, 5, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(197, 234, 6, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(208, 235, 3, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(199, 251, 8, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(203, 265, 6, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(205, 277, 5, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(208, 289, 4, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(228, 291, 5, PLANET_RED, ATMOSPHERE_HOT, 0);
+	this.makePlanet(249, 292, 5, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(268, 292, 4, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(288, 293, 6, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(290, 283, 6, PLANET_ROCK, ATMOSPHERE_STORM, 0);
+	this.objects.push(new Item(291*TILE_SIZE, 284*TILE_SIZE, 4));
+	this.makePlanet(291, 271, 5, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(299, 270, 6, PLANET_RED, ATMOSPHERE_HOT, 0);
+	this.makePlanet(297, 256, 5, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(299, 246, 5, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(298, 235, 5, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(299, 226, 4, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(297, 214, 5, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	this.makePlanet(295, 203, 5, PLANET_ROCK, ATMOSPHERE_HOT, 0);
+	//downward branch from hot planets
+	this.makePlanet(248, 306, 6, PLANET_RED, ATMOSPHERE_NORMAL, 0);
+	this.makePlanet(238, 310, 4, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(240, 317, 4, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	//lower rightward branch from hot planets
+	this.makePlanet(305, 284, 4, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(315, 285, 3, PLANET_ROCK, ATMOSPHERE_NORMAL, 0);
+	this.makePlanet(315, 275, 5, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(335, 264, 4, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	//fierinator
+	this.makePlanet(213, 134, 5, PLANET_RED, ATMOSPHERE_NORMAL);
+	this.makePlanet(212, 124, 3, PLANET_ROCK, ATMOSPHERE_NONE);
+	this.makePlanet(202, 123, 3, PLANET_ROCK, ATMOSPHERE_NONE);
+	this.makePlanet(203, 115, 5, PLANET_RED, ATMOSPHERE_NORMAL);
+	this.makePlanet(191, 124, 5, PLANET_RED, ATMOSPHERE_NORMAL);
+	this.makePlanet(180, 126, 4, PLANET_ROCK, ATMOSPHERE_NONE);
+	this.makePlanet(190, 139, 3, PLANET_ROCK, ATMOSPHERE_NONE);
+	this.makePlanet(203, 105, 3, PLANET_ROCK, ATMOSPHERE_NONE);
+	this.makePlanet(168, 125, 3, PLANET_ROCK, ATMOSPHERE_NONE);
+	this.makePlanet(158, 123, 5, PLANET_ICE, ATMOSPHERE_NORMAL);
+	this.makePlanet(204, 95, 3, PLANET_ROCK, ATMOSPHERE_NONE);
+	this.makePlanet(190, 92, 5, PLANET_ICE, ATMOSPHERE_NORMAL);
+	this.makePlanet(169, 94, 18, PLANET_GAS_BLUE, ATMOSPHERE_NONE);
+	this.makePlanet(189, 86, 3, PLANET_ROCK, ATMOSPHERE_NONE);
+	this.makePlanet(177, 85, 3, PLANET_ROCK, ATMOSPHERE_NONE);
+	this.objects.push(new Item(TILE_SIZE*178, TILE_SIZE*86, 3));
+	//suckinator
+	this.makePlanet(192, 339, 5, PLANET_RED, ATMOSPHERE_NORMAL, 0);
+	this.makePlanet(196, 349, 3, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(203, 350, 3, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.objects.push(new Robot(TILE_SIZE*204, TILE_SIZE*351));
+	this.makePlanet(202, 357, 3, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(211, 351, 3, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(198, 368, 5, PLANET_RED, ATMOSPHERE_NORMAL, 0);
+	this.makePlanet(199, 378, 6, PLANET_ICE, ATMOSPHERE_STORM, 0);
+	this.makePlanet(212, 380, 6, PLANET_ICE, ATMOSPHERE_NORMAL, 0);
+	this.makePlanet(220, 390, 17, PLANET_GAS_BLUE, ATMOSPHERE_NONE, 0);
+	this.makePlanet(211, 392, 3, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(225, 379, 2, PLANET_ROCK, ATMOSPHERE_NONE, 0);
+	this.makePlanet(242, 394, 4, PLANET_ICE, ATMOSPHERE_NORMAL, 0);
+	this.objects.push(new Item(TILE_SIZE*244, TILE_SIZE*396, 1));
+	//end
+	this.makePlanet(259, 117, 5, PLANET_ICE, ATMOSPHERE_STORM, 0);
+	this.makePlanet(249, 115, 5, PLANET_ICE, ATMOSPHERE_STORM, 0);
+	this.objects.push(new Robot(TILE_SIZE*252, TILE_SIZE*118));
+	this.makePlanet(247, 105, 5, PLANET_ICE, ATMOSPHERE_STORM, 0);
+	this.objects.push(new Robot(TILE_SIZE*250, TILE_SIZE*108));
+	this.makePlanet(244, 85, 12, PLANET_BLUE, ATMOSPHERE_NORMAL, [
+		"    xxx     ",
+		"  xxxxxxxx  ",
+		"      xxxx  ",
+		"  x      x  ",
+		"x xxx       ",
+		"xxxxxxxx   x",
+		" xxxxxxxxx  ",
+		"  xxxxxxxx  ",
+		"  xxxxxxxxx ",
+		"     xxxxxx ",
+		"  xxxxxxxxx ",
+		"   xxxxxxx  "
+	]);
+	this.objects.push(new Item(TILE_SIZE*250, TILE_SIZE*91, 5));
+}
+
+/*=====main functions=====*/
+function render(){
+	if(victory){
+		context2D.fillStyle="#000000";
+		context2D.fillRect(0, 0, CONTEXT_WIDTH, CONTEXT_HEIGHT);
+		context2D.fillStyle="#00FFFF";
+		context2D.textAlign="center";
+		context2D.fillText("You win!", CONTEXT_WIDTH/2, CONTEXT_HEIGHT/4);
+		return;
+	}
+	for(var i=0; i<TILES_WIDE+1; ++i)
+		for(var j=0; j<TILES_HIGH+1; ++j)
+			context2D.drawImage(
+				world.tiles[i-TILES_WIDE/2+Math.floor(player.x/TILE_SIZE)][j-TILES_HIGH/2+Math.floor(player.y/TILE_SIZE)].image,
+				i*TILE_SIZE-Math.floor(player.x)%TILE_SIZE,
+				j*TILE_SIZE-Math.floor(player.y)%TILE_SIZE);
+	player.nearRobot=false;
+	player.veryNearRobot=false;
+	player.nearSpider=false;
+	player.veryNearSpider=false;
+	var i=0;
+	while(i<world.objects.length){
+		if(!world.objects[i].update()){
+			world.objects.splice(i, 1);
+		}
+		else{
+			world.objects[i].render();
+			++i;
+		}
+	}
+	player.update();
+	player.render();
+}
+
+function finishLoadingThenStart(){
+	if(loadedRequiredResources<totalRequiredResources){
+		context2D.fillStyle="#000000";
+		context2D.fillRect(0, 0, CONTEXT_WIDTH, CONTEXT_HEIGHT);
+		context2D.fillStyle="#00FFFF";
+		context2D.textAlign="center";
+		context2D.fillText("Terraformer Breath", CONTEXT_WIDTH/2, CONTEXT_HEIGHT/4);
+		context2D.fillText("Loading...", CONTEXT_WIDTH/2, CONTEXT_HEIGHT/4+24);
+		context2D.fillText(loadedRequiredResources.toString()+"/"+totalRequiredResources.toString(), CONTEXT_WIDTH/2, CONTEXT_HEIGHT/4+36);
+		setTimeout("finishLoadingThenStart()", 500);
+	}
+	else{
+		guide.eventHappened(EVENT_START);
+		setInterval(render, 30);
+	}
+}
+
+function main(){
+	victory=false;
+	canvas=document.getElementById('canvas');
+	context2D=canvas.getContext('2d');
+	images=new Images();
+	sounds=new Sounds();
+	world=new World();
+	music=new Music();
+	player=new Player();
+	player.setLocation(TILE_SIZE*257, TILE_SIZE*161);
+	breath=new Breath();
+	guide=new Guide();
+	document.onkeydown=function(event){ player.keyDown(event); }
+	document.onkeyup=function(event){ player.keyUp(event); }
+	context2D.fillStyle="#000000";
+	context2D.fillRect(0, 0, CONTEXT_WIDTH, CONTEXT_HEIGHT);
+	context2D.fillStyle="#00FFFF";
+	context2D.textAlign="center";
+	context2D.fillText("Terraformer Breath", CONTEXT_WIDTH/2, CONTEXT_HEIGHT/4);
+	context2D.fillText("Loading...", CONTEXT_WIDTH/2, CONTEXT_HEIGHT/4+24);
+	setTimeout("finishLoadingThenStart()", 3000);
+}
+//======================================================================//
+	</script>
+</head>
+<body>
+	<canvas id="canvas" width="640" height="480">
+		<p>Your browser does not support the canvas element.</p>
+	</canvas>
+	<p>Brought to you by <a href="http://dansonlinepresence.wordpress.com/2012/03/15/overview/">dansonlinepresence</a>.</p>
+</body>
